@@ -4,103 +4,136 @@
   <meta charset="UTF-8" />
   <!-- أيقونة الموقع -->
   <link rel="icon" type="image/png" href="https://i.postimg.cc/DwfSJ5k9/Gemini-Generated-Image-klq5r4klq5r4klq5-Cropped-removebg-preview.png">
-  
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Advice to be Nice</title>
-  <meta name="theme-color" content="#07111f">
-  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#7c3aed" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Believer’s Guide</title>
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="bg"></div>
+  <div class="bg-glow g1"></div>
+  <div class="bg-glow g2"></div>
 
   <div class="app">
-    <header class="hero glass">
+    <header class="topbar card">
       <div>
-        <p class="badge">موقع إيماني يومي</p>
-        <h1>Advice to be Nice</h1>
-        <p class="subtitle">القرآن، الصلاة، المهام، والإشعارات في مكان واحد.</p>
+        <h1>Believer’s Guide</h1>
+        <p>القرآن، الأحاديث، الصلاة، الأذكار، والمهام اليومية</p>
       </div>
-      <div class="scoreBox">
-        <span>الحسنات</span>
-        <strong id="hasanat">0</strong>
-      </div>
+      <button id="themeToggle" class="icon-btn">🌙</button>
     </header>
 
-    <div class="layout">
-      <aside class="glass side">
-        <section class="box">
-          <div class="head">
-            <h2>مواقيت الصلاة</h2>
-            <button class="btn ghost" id="refreshPrayers">تحديث</button>
-          </div>
-          <div class="muted" id="prayerDate"></div>
-          <div id="prayerTimes" class="prayerGrid"></div>
-        </section>
+    <section class="hero card">
+      <div>
+        <span class="badge">لوحة المسلم اليومية</span>
+        <h2>كل شيء في مكان واحد</h2>
+        <p>تصميم أنيق، ألوان جذابة، وخط قرآن واضح.</p>
+      </div>
+      <div class="stats">
+        <div><strong id="goodDeeds">0</strong><span>الحسنات</span></div>
+        <div><strong id="taskCount">0</strong><span>المهام</span></div>
+        <div><strong id="zikrCount">0</strong><span>الأذكار</span></div>
+      </div>
+    </section>
 
-        <section class="box">
-          <div class="head">
-            <h2>المهام</h2>
-            <button class="btn ghost" id="resetTasks">إعادة</button>
-          </div>
-          <div id="tasks" class="tasks"></div>
-        </section>
+    <section class="card prayer-card">
+      <div class="section-head">
+        <h3>مواقيت الصلاة</h3>
+        <div class="row">
+          <button id="notifyBtn" class="btn">تفعيل الإشعارات</button>
+          <button id="adhanTestBtn" class="btn alt">اختبار الأذان</button>
+        </div>
+      </div>
+      <p id="locationText" class="muted">جارٍ تحديد الموقع...</p>
+      <div id="prayerTimes" class="prayer-grid"></div>
+      <audio id="adhanAudio" preload="auto">
+        <source src="https://www.islamcan.com/audio/adhan/azan2.mp3" type="audio/mpeg" />
+      </audio>
+    </section>
 
-        <section class="box">
-          <div class="head">
-            <h2>الإشعارات</h2>
-          </div>
-          <button class="btn primary full" id="enableNotifs">تفعيل الإشعارات</button>
-          <p id="notifStatus" class="muted"></p>
-        </section>
+    <section class="cards-grid">
+      <a class="nav-card card" href="#quran-section"><h3>القرآن الكريم</h3><p>فهرس السور وفتح كل سورة.</p></a>
+      <a class="nav-card card" href="#hadith-section"><h3>الأحاديث النبوية</h3><p>كتب الحديث وفتح كل كتاب.</p></a>
+      <a class="nav-card card" href="#azkar-section"><h3>الأذكار</h3><p>أذكار الصباح والمساء مع عداد.</p></a>
+      <a class="nav-card card" href="#tasks-section"><h3>المهام</h3><p>حفظ تلقائي مع checkbox.</p></a>
+    </section>
 
-        <section class="box">
-          <div class="head">
-            <h2>حفظ التقدم</h2>
-          </div>
-          <button class="btn primary full" id="saveProgress">حفظ التقدم</button>
-        </section>
-      </aside>
+    <section id="quran-section" class="card">
+      <div class="section-head">
+        <h3>القرآن الكريم</h3>
+        <input id="quranSearch" type="text" placeholder="ابحث عن سورة..." />
+      </div>
+      <div id="surahGrid" class="grid"></div>
+    </section>
 
-      <main class="glass main">
-        <section class="box">
-          <div class="head">
-            <h2 id="surahTitle">اختر سورة من الأسفل</h2>
-            <div class="inline">
-              <button class="btn ghost" id="prevSurah">السابق</button>
-              <button class="btn ghost" id="nextSurah">التالي</button>
-            </div>
-          </div>
+    <section id="surahView" class="card hidden">
+      <div class="section-head">
+        <div>
+          <h3 id="surahTitle">سورة</h3>
+          <p id="surahMeta" class="muted"></p>
+        </div>
+        <button id="backToQuran" class="btn alt">رجوع</button>
+      </div>
+      <div id="ayahs" class="ayahs"></div>
+    </section>
 
-          <div class="toolbar">
-            <input id="searchSurah" type="text" placeholder="ابحث في السور..." />
-            <button class="btn primary" id="loadSurahBtn">جلب السورة</button>
-          </div>
+    <section id="hadith-section" class="card">
+      <div class="section-head">
+        <h3>الأحاديث النبوية</h3>
+        <input id="hadithSearch" type="text" placeholder="ابحث عن كتاب..." />
+      </div>
+      <div id="bookGrid" class="grid"></div>
+    </section>
 
-          <div id="surahMeta" class="muted"></div>
-          <div id="ayahs" class="ayahs"></div>
-        </section>
+    <section id="bookView" class="card hidden">
+      <div class="section-head">
+        <div>
+          <h3 id="bookTitle">كتاب الحديث</h3>
+          <p id="bookMeta" class="muted"></p>
+        </div>
+        <button id="backToHadith" class="btn alt">رجوع</button>
+      </div>
+      <div class="row">
+        <input id="hadithNo" type="number" min="1" placeholder="رقم الحديث" />
+        <button id="loadHadith" class="btn">عرض</button>
+      </div>
+      <div id="hadithBox" class="hadith-box"></div>
+    </section>
 
-        <section class="box bottom">
-          <div class="head">
-            <h2>قائمة السور</h2>
-            <span class="muted">اضغط على أي سورة</span>
-          </div>
-          <div id="surahList" class="surahList"></div>
-        </section>
-      </main>
-    </div>
+    <section id="azkar-section" class="card">
+      <div class="section-head">
+        <h3>الأذكار</h3>
+        <div class="row">
+          <button class="btn" id="showMorning">أذكار الصباح</button>
+          <button class="btn" id="showEvening">أذكار المساء</button>
+        </div>
+      </div>
+      <div class="progress">
+        <span>العداد: <b id="count">0</b></span>
+        <button id="countBtn" class="btn alt">+1 ذكر</button>
+      </div>
+      <div id="adhkarList" class="list-stack"></div>
+    </section>
+
+    <section id="tasks-section" class="card">
+      <div class="section-head">
+        <h3>المهام اليومية</h3>
+        <span class="muted">حفظ تلقائي</span>
+      </div>
+      <div class="row">
+        <input id="taskInput" placeholder="اكتب مهمة..." />
+        <button class="btn" id="addTask">إضافة</button>
+      </div>
+      <ul id="taskList" class="tasks"></ul>
+    </section>
   </div>
 
-  <div id="toast" class="toast"></div>
-  
-  <!-- تم التأكد أن اسم الملف هو app.js -->
-  <script src="app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,57 +1,125 @@
+:root{
+  --bg1:#07111f;
+  --bg2:#0c1a2f;
+  --card:#101b30cc;
+  --card2:#13213acc;
+  --text:#f8fbff;
+  --muted:#a7b8d1;
+  --line:rgba(255,255,255,.08);
+  --primary:#8b5cf6;
+  --primary2:#06b6d4;
+  --accent:#f59e0b;
+  --accent2:#22c55e;
+  --shadow:0 18px 45px rgba(0,0,0,.35);
+}
+
+body.light{
+  --bg1:#edf4ff;
+  --bg2:#f7fbff;
+  --card:#ffffff;
+  --card2:#f7f9fe;
+  --text:#0f172a;
+  --muted:#667085;
+  --line:#dbe4f0;
+  --primary:#7c3aed;
+  --primary2:#0ea5e9;
+  --accent:#f97316;
+  --accent2:#16a34a;
+  --shadow:0 18px 45px rgba(15,23,42,.08);
+}
+
 *{box-sizing:border-box}
-body{margin:0;font-family:"Cairo",sans-serif;background:#07111f;color:#eef4ff}
-.bg{position:fixed;inset:0;background:radial-gradient(circle at top right,#123055 0%,transparent 30%),radial-gradient(circle at top left,#1b4d3a 0%,transparent 25%);z-index:-1}
-.app{width:min(1400px,94vw);margin:auto;padding:24px}
-.glass{background:#0c1728;border:1px solid #203454;border-radius:22px;box-shadow:0 16px 50px rgba(0,0,0,.3)}
-.hero{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:22px;margin-bottom:18px}
-.badge{display:inline-block;background:#1a2d4d;color:#b8d1ff;padding:6px 12px;border-radius:999px;margin:0 0 10px}
-h1,h2{margin:0 0 10px}
-.subtitle,.muted{color:#9db0cc}
-.scoreBox{min-width:160px;text-align:center;padding:18px 22px}
-.scoreBox strong{font-size:52px;color:#35d07f;display:block;line-height:1}
-.layout{display:grid;grid-template-columns:330px 1fr;gap:18px}
-.side,.main{padding:18px}
-.side{display:grid;gap:16px;align-content:start;min-height:calc(100vh - 170px)}
-.main{display:grid;gap:16px}
-.box{background:rgba(9,16,28,.75);border:1px solid #203454;border-radius:18px;padding:16px}
-.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
-.inline{display:flex;gap:8px;flex-wrap:wrap}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-input,select{
-  width:100%;background:#09101c;border:1px solid #203454;color:#eef4ff;
-  border-radius:12px;padding:12px 14px;font-family:inherit
+body{
+  margin:0;
+  font-family:'Cairo',Tahoma,Arial,sans-serif;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:var(--text);
+  min-height:100vh;
 }
-.btn{border:none;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:15px;cursor:pointer;font-weight:700}
-.primary{background:#2ecc71;color:#052111}
-.ghost{background:#13233d;color:#eef4ff;border:1px solid #203454}
-.full{width:100%}
-.prayerGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.prayerItem,.taskItem,.ayah,.surahItem{
-  background:#09101c;border:1px solid #203454;border-radius:14px;padding:12px
+a{text-decoration:none;color:inherit}
+.app{max-width:1280px;margin:auto;padding:16px;position:relative;z-index:2}
+.card{
+  background:linear-gradient(180deg,var(--card),var(--card2));
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
 }
-.prayerItem{display:flex;justify-content:space-between;align-items:center}
-.tasks{display:grid;gap:10px}
-.taskItem{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.taskItem label{display:flex;gap:10px;align-items:center;cursor:pointer}
-.taskItem input{width:20px;height:20px;accent-color:#35d07f}
-.ayahs{display:grid;gap:10px;margin-top:12px}
-.ayah strong{color:#f8c25c}
-.surahList{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:10px;max-height:360px;overflow:auto;padding-right:4px
+.topbar,.section-head,.hero,.progress{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.topbar{padding:18px 20px;margin-bottom:16px}
+.hero{padding:20px;margin-bottom:16px;flex-wrap:wrap}
+.hero h2{margin:10px 0 8px;font-size:32px}
+.hero p{margin:0;color:var(--muted)}
+.badge{
+  display:inline-flex;padding:7px 12px;border-radius:999px;
+  background:rgba(139,92,246,.14);border:1px solid var(--line);color:var(--text);font-weight:700
 }
-.surahItem{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.surahItem.active{border-color:#35d07f;background:#0d1b2e}
-.bottom{margin-top:4px}
-.audioPlayer{width:100%;margin-top:12px}
+.stats{display:flex;gap:12px;flex-wrap:wrap}
+.stats div,.prayer-item,.nav-card{
+  min-width:110px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px
+}
+.stats strong{display:block;font-size:26px}
+.stats span{color:var(--muted);font-size:14px}
+.section-head{margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn,.icon-btn{
+  border:0;border-radius:14px;padding:11px 16px;cursor:pointer;color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--primary2));
+  box-shadow:0 12px 26px rgba(124,58,237,.18)
+}
+.btn.alt{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.icon-btn{width:46px;height:46px;padding:0;font-size:18px}
+input{
+  width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);color:var(--text);outline:none
+}
+.muted{color:var(--muted)}
+.prayer-grid,.grid,.cards-grid{display:grid;gap:12px}
+.prayer-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.grid{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
+.cards-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:16px}
+.nav-card{display:block;transition:.2s transform ease}
+.nav-card:hover{transform:translateY(-2px)}
+.nav-card h3{margin-top:0}
+.nav-card p{color:var(--muted);margin-bottom:0}
+.prayer-item{display:flex;flex-direction:column;gap:8px}
+.prayer-item strong{font-size:16px}
+.prayer-item span{color:var(--muted)}
+.list-stack,.hadith-box,.ayahs{display:grid;gap:12px}
+.adhkar-card,.hadith-card,.ayah,.task-item{
+  padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--card)
+}
+.ayah-text{
+  font-family:'Amiri','Traditional Arabic',serif;
+  font-size:30px;line-height:2.4;text-align:justify
+}
+.ayah-number{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:999px;margin-inline-start:8px;
+  background:var(--accent);color:#111;font-weight:800;font-size:14px
+}
+.progress{margin:12px 0 16px;flex-wrap:wrap}
+.tasks{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+.tasks li{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--card)
+}
+.hidden{display:none}
+.bg-glow{
+  position:fixed;width:420px;height:420px;border-radius:50%;filter:blur(90px);opacity:.35;z-index:1;pointer-events:none
+}
+.g1{top:-120px;right:-120px;background:radial-gradient(circle,var(--primary),transparent 70%)}
+.g2{bottom:-140px;left:-140px;background:radial-gradient(circle,var(--primary2),transparent 70%)}
 .toast{
-  position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(120%);
-  background:#102038;border:1px solid #2b4571;color:#fff;padding:12px 18px;border-radius:14px;
-  transition:.25s transform;z-index:20
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#111827;color:#fff;padding:12px 16px;border-radius:14px;
+  opacity:0;transition:.25s;z-index:9999;box-shadow:0 10px 24px rgba(0,0,0,.25)
 }
-.toast.show{transform:translateX(-50%) translateY(0)}
-@media (max-width: 1100px){
-  .layout,.hero{grid-template-columns:1fr;display:grid}
-  .side{min-height:auto}
-  .prayerGrid{grid-template-columns:1fr}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:720px){
+  .topbar,.section-head,.hero,.progress{flex-direction:column;align-items:flex-start}
 }
