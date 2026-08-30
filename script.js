@@ -1,41 +1,52 @@
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+const SUPABASE_URL = "https://klsotmphlscsbtbjtrot.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_J3Apxjcvka5UNLKqlqaphw_5awUuVUS";
 let currentUser = null;
 let cloudSyncTimer = null;
+let supabaseClient = null;
+
+
+try {
+  if (typeof supabase !== "undefined" && SUPABASE_URL && SUPABASE_URL !== "YOUR_SUPABASE_URL") {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch {
+  supabaseClient = null;
+}
 
 function scheduleCloudSave() {
-  if (!currentUser) return;
+  if (!currentUser || !supabaseClient) return;
   clearTimeout(cloudSyncTimer);
   cloudSyncTimer = setTimeout(() => {
-    db.collection("users").doc(currentUser.uid).set(state, { merge: true }).catch(() => {});
+    supabaseClient
+      .from("user_progress")
+      .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() })
+      .then(() => {})
+      .catch(() => {});
   }, 1200);
 }
 
 function signInGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(() => toast("تعذر تسجيل الدخول، حاول تاني"));
+  if (!supabaseClient) {
+    toast("تسجيل الدخول لسه مش مفعّل، لازم تحط بيانات Supabase الأول");
+    return;
+  }
+  supabaseClient.auth
+    .signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } })
+    .then(({ error }) => { if (error) toast("تعذر تسجيل الدخول، حاول تاني"); });
 }
 
 function signOutUser() {
-  auth.signOut();
+  if (supabaseClient) supabaseClient.auth.signOut();
 }
 
 function renderAuthUI() {
   const el = document.getElementById("authArea");
   if (!el) return;
   if (currentUser) {
+    const meta = currentUser.user_metadata || {};
     el.innerHTML = `
-      <img class="avatar" src="${currentUser.photoURL || ''}" alt="" />
-      <span class="user-name">${currentUser.displayName || 'مستخدم'}</span>
+      <img class="avatar" src="${meta.avatar_url || meta.picture || ''}" alt="" />
+      <span class="user-name">${meta.full_name || meta.name || 'مستخدم'}</span>
       <button id="signOutBtn" class="icon-btn" title="تسجيل خروج">↩</button>
     `;
     document.getElementById("signOutBtn").onclick = signOutUser;
@@ -45,29 +56,48 @@ function renderAuthUI() {
   }
 }
 
-auth.onAuthStateChanged(async user => {
-  currentUser = user;
-  renderAuthUI();
-  if (user) {
-    try {
-      const snap = await db.collection("users").doc(user.uid).get();
-      if (snap.exists) {
-        const cloud = snap.data();
-        Object.assign(state, cloud);
-        renderTasks();
-        renderAdhkar(state.currentAdhkar);
-        applyTheme();
-        loadStats();
-        toast("تم استرجاع تقدمك المحفوظ");
-      } else {
-        scheduleCloudSave();
-      }
-    } catch {
-      toast("تعذر تحميل بياناتك من السحابة، هيتم الاعتماد على الحفظ المحلي");
+async function loadCloudState(user) {
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from("user_progress")
+      .select("data")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (data && data.data) {
+      Object.assign(state, data.data);
+      renderTasks();
+      renderAdhkar(state.currentAdhkar);
+      applyTheme();
+      loadStats();
+      toast("تم استرجاع تقدمك المحفوظ");
+    } else {
+      scheduleCloudSave();
     }
+  } catch {
+    toast("تعذر تحميل بياناتك من السحابة، هيتم الاعتماد على الحفظ المحلي");
   }
-});
-// ====== نهاية إعدادات Firebase ======
+}
+
+renderAuthUI(); // يظهر زرار تسجيل الدخول فورًا حتى لو Supabase لسه مش متظبط
+
+if (supabaseClient) {
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    currentUser = session ? session.user : null;
+    renderAuthUI();
+    if (currentUser) loadCloudState(currentUser);
+  });
+}
+
+if (supabaseClient) {
+  supabaseClient.auth.getSession().then(({ data }) => {
+    currentUser = data.session ? data.session.user : null;
+    renderAuthUI();
+    if (currentUser) loadCloudState(currentUser);
+  });
+}
+// ====== نهاية إعدادات Supabase ======
 
 let prayerTimes = {
   الفجر: "04:18",
