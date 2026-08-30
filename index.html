@@ -2,11 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <!-- أيقونة الموقع -->
   <link rel="icon" type="image/png" href="https://i.postimg.cc/DwfSJ5k9/Gemini-Generated-Image-klq5r4klq5r4klq5-Cropped-removebg-preview.png">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#7c3aed" />
+  <meta name="theme-color" content="#0a1a17" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Believer’s Guide</title>
@@ -15,18 +14,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase (تسجيل الدخول بجوجل + حفظ التقدم في السحابة) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <div class="bg-glow g1"></div>
-  <div class="bg-glow g2"></div>
-
   <div class="app">
+    <div class="dua-banner card">
+      🤲 أرجو الدعاء إلى جدي بالرحمة وجميع أموات المسلمين
+    </div>
+
     <header class="topbar card">
-      <div>
-        <h1>Believer’s Guide</h1>
-        <p>القرآن، الأحاديث، الصلاة، الأذكار، والمهام اليومية</p>
+      <div class="topbar-left">
+        <div>
+          <h1>Believer’s Guide</h1>
+          <p>القرآن، الأحاديث، الصلاة، الأذكار، والمهام اليومية</p>
+        </div>
       </div>
-      <button id="themeToggle" class="icon-btn">🌙</button>
+      <div class="topbar-actions">
+        <div id="authArea"></div>
+        <button id="themeToggle" class="icon-btn">🌙</button>
+      </div>
     </header>
 
     <section class="hero card">
@@ -42,7 +52,6 @@
       </div>
     </section>
 
-    <!-- قسم مواقيت الصلاة والمذاهب المحدث -->
     <section class="card prayer-card">
       <div class="section-head">
         <h3>مواقيت الصلاة</h3>
@@ -52,9 +61,15 @@
         </div>
       </div>
       
-      <!-- إعدادات الموقع والمذهب لتبدو كتطبيق هاتف حقيقي -->
       <div class="settings-row">
-        <p id="locationText" class="muted">جارٍ تحديد موقعك الجغرافي...</p>
+        <div>
+          <p id="locationText" class="muted">جارٍ تحديد موقعك الجغرافي...</p>
+          <div id="manualLoc" class="manual-loc">
+            <input id="cityInput" type="text" placeholder="المدينة (مثال: القاهرة)" />
+            <input id="countryInput" type="text" placeholder="الدولة (مثال: مصر)" />
+            <button id="citySearchBtn" class="btn alt">تحديد يدوي</button>
+          </div>
+        </div>
         <div class="select-container">
           <label for="madhabSelect" class="muted">المذهب الفقهي:</label>
           <select id="madhabSelect" class="app-select">
@@ -92,7 +107,13 @@
           <h3 id="surahTitle">سورة</h3>
           <p id="surahMeta" class="muted"></p>
         </div>
-        <button id="backToQuran" class="btn alt">رجوع</button>
+        <div class="row">
+          <button id="backToQuran" class="btn alt">رجوع</button>
+        </div>
+      </div>
+      <div class="audio-player-wrap">
+        <span class="muted">🎧 تلاوة بصوت الشيخ عبدالباسط عبدالصمد:</span>
+        <audio id="surahAudio" controls preload="none"></audio>
       </div>
       <div id="ayahs" class="ayahs"></div>
     </section>
@@ -146,6 +167,8 @@
       </div>
       <ul id="taskList" class="tasks"></ul>
     </section>
+
+    <footer class="app-footer">Made by Ziyad Mira</footer>
   </div>
 
   <script src="script.js"></script>

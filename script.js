@@ -1,4 +1,74 @@
-// المواقيت الافتراضية اللي طلبتها كـ Fallback في حال عدم تفعيل الـ GPS
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+let cloudSyncTimer = null;
+
+function scheduleCloudSave() {
+  if (!currentUser) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => {
+    db.collection("users").doc(currentUser.uid).set(state, { merge: true }).catch(() => {});
+  }, 1200);
+}
+
+function signInGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(() => toast("تعذر تسجيل الدخول، حاول تاني"));
+}
+
+function signOutUser() {
+  auth.signOut();
+}
+
+function renderAuthUI() {
+  const el = document.getElementById("authArea");
+  if (!el) return;
+  if (currentUser) {
+    el.innerHTML = `
+      <img class="avatar" src="${currentUser.photoURL || ''}" alt="" />
+      <span class="user-name">${currentUser.displayName || 'مستخدم'}</span>
+      <button id="signOutBtn" class="icon-btn" title="تسجيل خروج">↩</button>
+    `;
+    document.getElementById("signOutBtn").onclick = signOutUser;
+  } else {
+    el.innerHTML = `<button id="signInBtn" class="btn google-btn">تسجيل الدخول بجوجل</button>`;
+    document.getElementById("signInBtn").onclick = signInGoogle;
+  }
+}
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  renderAuthUI();
+  if (user) {
+    try {
+      const snap = await db.collection("users").doc(user.uid).get();
+      if (snap.exists) {
+        const cloud = snap.data();
+        Object.assign(state, cloud);
+        renderTasks();
+        renderAdhkar(state.currentAdhkar);
+        applyTheme();
+        loadStats();
+        toast("تم استرجاع تقدمك المحفوظ");
+      } else {
+        scheduleCloudSave();
+      }
+    } catch {
+      toast("تعذر تحميل بياناتك من السحابة، هيتم الاعتماد على الحفظ المحلي");
+    }
+  }
+});
+// ====== نهاية إعدادات Firebase ======
+
 let prayerTimes = {
   الفجر: "04:18",
   الشروق: "06:02",
@@ -49,6 +119,7 @@ const state = {
   madhab: localStorage.getItem("appMadhab") || "0", // 0 = حنبلي/شافعي/مالكي، 1 = حنفي
   completed: JSON.parse(localStorage.getItem("completedTasks") || "[]"),
   userCoords: JSON.parse(localStorage.getItem("userCoords") || "null"),
+  manualCity: JSON.parse(localStorage.getItem("manualCity") || "null"),
   motivational: ["ممتاز! كمل واثبت.","أحسنت جدًا.","ربنا يبارك فيك.","خطوة جميلة جدًا.","استمر، أنت على الطريق الصح."]
 };
 
@@ -63,6 +134,8 @@ function save() {
   localStorage.setItem("appMadhab", state.madhab);
   localStorage.setItem("completedTasks", JSON.stringify(state.completed));
   localStorage.setItem("userCoords", JSON.stringify(state.userCoords));
+  localStorage.setItem("manualCity", JSON.stringify(state.manualCity));
+  scheduleCloudSave();
 }
 
 function toast(msg) {
@@ -93,7 +166,6 @@ function playAdhan() {
   const audio = $("adhanAudio");
   if (audio) {
     audio.currentTime = 0;
-    // لتفادي قيود المتصفحات على التشغيل التلقائي بدون تفاعل في المرة الأولى
     audio.play().catch(err => {
       console.log("برجاء التفاعل مع الشاشة لتفعيل صوت الأذان تلقائياً: ", err);
     });
@@ -106,12 +178,10 @@ function renderPrayerTimes() {
   `).join("");
 }
 
-// جلب المواقيت تلقائياً وتحديثها بناء على الموقع الجغرافي والمذهب
 async function fetchPrayerTimesAPI(lat, lon) {
   try {
     const today = new Date();
     const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
-    // نستخدم مذهب الحساب التلقائي مع ضبط المذهب الفقهي المختلط (0 للشافعي/الحنبلي، 1 للحنفي)
     const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&school=${state.madhab}`;
     
     const response = await fetch(url);
@@ -129,18 +199,46 @@ async function fetchPrayerTimesAPI(lat, lon) {
       };
       renderPrayerTimes();
       $("locationText").textContent = `الموقع الجغرافي: نشط (مُحدّث تلقائياً)`;
+      checkPrayer();
     }
   } catch (error) {
     console.log("فشل جلب المواقيت الحية، نعتمد على المواقيت الثابتة المخزنة كـ احتياطي.");
   }
 }
 
+async function fetchPrayerTimesByCity(city, country) {
+  try {
+    $("locationText").textContent = "جارٍ جلب المواقيت الحقيقية للمدينة المحددة...";
+    const url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&school=${state.madhab}`;
+    const response = await fetch(url);
+    const result = await response.json();
+    if (result && result.data && result.data.timings) {
+      const t = result.data.timings;
+      prayerTimes = {
+        الفجر: t.Fajr, الشروق: t.Sunrise, الظهر: t.Dhuhr,
+        العصر: t.Asr, المغرب: t.Maghrib, العشاء: t.Isha
+      };
+      renderPrayerTimes();
+      state.manualCity = { city, country };
+      save();
+      $("locationText").textContent = `المواقيت الحقيقية لـ ${city}، ${country}`;
+      $("manualLoc").classList.remove("show");
+      checkPrayer();
+    } else {
+      toast("تعذر إيجاد المدينة، تأكد من الاسم");
+    }
+  } catch {
+    toast("تعذر الاتصال بخدمة المواقيت الآن");
+  }
+}
+
 function autoLocation() {
   if (!navigator.geolocation) {
     $("locationText").textContent = "الموقع الجغرافي غير مدعوم في جهازك";
+    $("manualLoc").classList.add("show");
     return;
   }
-  
+
   navigator.geolocation.getCurrentPosition(
     pos => {
       state.userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
@@ -148,28 +246,36 @@ function autoLocation() {
       fetchPrayerTimesAPI(pos.coords.latitude, pos.coords.longitude);
     },
     () => {
-      if(state.userCoords) {
-        // لو وافق زمان ورفض دلوقتي نستخدم الكاش القديم
+      if (state.userCoords) {
         fetchPrayerTimesAPI(state.userCoords.lat, state.userCoords.lon);
+      } else if (state.manualCity) {
+        fetchPrayerTimesByCity(state.manualCity.city, state.manualCity.country);
       } else {
-        $("locationText").textContent = "تعذر الوصول للموقع الجغرافي. تم تطبيق المواقيت الافتراضية";
+        $("locationText").textContent = "تعذر الوصول للموقع الجغرافي. تقدر تحدد مدينتك يدويًا تحت 👇";
+        $("manualLoc").classList.add("show");
       }
     },
     { enableHighAccuracy: true, timeout: 10000 }
   );
 }
 
-// فحص كل دقيقة للأذان التلقائي بالثانية والدقيقة لضمان التشغيل كتطبيق حقيقي
+// فحص كل 15 ثانية + عند رجوع التاب للنشاط، عشان الأذان يشتغل بالظبط في وقت الصلاة الحقيقي
 function checkPrayer() {
   const d = new Date();
-  const now = d.toTimeString().slice(0, 5); // صيغة "HH:MM"
-  
+  const nowMinutes = d.getHours() * 60 + d.getMinutes();
+  const todayKey = d.toDateString();
+
   Object.entries(prayerTimes).forEach(([name, time]) => {
     // إزالة أي فروق تنسيقية إذا رجعت الـ API صيغة مثل "04:18 (EEST)"
     const cleanTime = time.split(" ")[0];
-    const key = `${name}-${cleanTime}-${now}`;
-    
-    if (now === cleanTime && state.lastPrayer !== key) {
+    const [h, m] = cleanTime.split(":").map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return;
+    const prayerMinutes = h * 60 + m;
+    const diff = nowMinutes - prayerMinutes; // كام دقيقة عدّت على وقت الأذان
+    const key = `${name}-${cleanTime}-${todayKey}`;
+
+    // نافذة لحاق 3 دقائق: تغطي حالة إن التاب كان مقفول/غير نشط في اللحظة بالظبط
+    if (diff >= 0 && diff <= 3 && state.lastPrayer !== key) {
       if (name !== "الشروق") { // الشروق ليس له أذان صلاة
         notify(`حان وقت صلاة ${name}`, `تذكير برفع الأذان الآن`);
         playAdhan();
@@ -179,18 +285,18 @@ function checkPrayer() {
       state.lastPrayer = key;
       save();
       toast(`حان وقت ${name}`);
-      
+
       // تمييز بصري للصلاة الحالية
       document.querySelectorAll('.prayer-item').forEach(el => el.classList.remove('active-prayer'));
       const activeEl = $(`p-${name}`);
-      if(activeEl) activeEl.classList.add('active-prayer');
+      if (activeEl) activeEl.classList.add('active-prayer');
     }
   });
 }
 
 function renderQuran(list = quranData) {
   $("surahGrid").innerHTML = list.map(s => `
-    <button class="prayer-item" type="button" onclick="openSurah(${s.number})">
+    <button class="prayer-item" type="button" onclick="location.hash='#quran?s=${s.number}'">
       <strong>${s.number}</strong><span>سورة ${s.name}</span>
     </button>
   `).join("");
@@ -198,7 +304,7 @@ function renderQuran(list = quranData) {
 
 function renderBooks(list = hadithData) {
   $("bookGrid").innerHTML = list.map(b => `
-    <button class="prayer-item" type="button" onclick="openHadith('${b.slug}','${b.name}')">
+    <button class="prayer-item" type="button" onclick="location.hash='#hadith?b=${b.slug}&n=1&name=${encodeURIComponent(b.name)}'">
       <strong>${b.name}</strong><span>${b.slug}</span>
     </button>
   `).join("");
@@ -258,12 +364,43 @@ function rewardQuran() {
   loadStats();
 }
 
+// عدة مصادر لصوت عبدالباسط عبدالصمد، بيجرب واحد ورا التاني تلقائيًا لو الأول مش شغال
+function basitAudioSources(num) {
+  const n3 = String(num).padStart(3, "0");
+  return [
+    `https://server7.mp3quran.net/basit/${n3}.mp3`,
+    `https://download.quranicaudio.com/quran/abdulbasit_mujawwad/${n3}.mp3`,
+    `https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/${n3}.mp3`,
+    `https://server7.mp3quran.net/download/basit/Almusshaf-Al-Mojawwad/${n3}.mp3`
+  ];
+}
+
+function setSurahAudio(num) {
+  const audio = $("surahAudio");
+  const sources = basitAudioSources(num);
+  let i = 0;
+  audio.onerror = () => {
+    i++;
+    if (i < sources.length) {
+      audio.src = sources[i];
+      audio.load();
+    } else {
+      toast("تعذر تشغيل التلاوة من كل المصادر المتاحة حاليًا");
+    }
+  };
+  audio.src = sources[0];
+  audio.load();
+}
+
 function openSurah(num) {
   const s = quranData.find(x => x.number === num);
   if (!s) return;
+  document.body.classList.add("reading-mode");
   $("surahView").classList.remove("hidden");
   $("surahTitle").textContent = `سورة ${s.name}`;
   $("surahMeta").textContent = "جاري تحميل السورة كاملة...";
+  document.title = `سورة ${s.name} — Believer's Guide`;
+  setSurahAudio(num);
   fetch(`https://api.alquran.cloud/v1/surah/${num}`)
     .then(r => r.json())
     .then(data => {
@@ -278,10 +415,19 @@ function openSurah(num) {
     .catch(() => $("ayahs").innerHTML = `<div class="hadith-card">تعذر تحميل السورة الآن.</div>`);
 }
 
-function openHadith(slug, name) {
+function stopSurahAudio() {
+  const audio = $("surahAudio");
+  if (audio) { audio.pause(); audio.removeAttribute("src"); audio.load(); }
+}
+
+function openHadith(slug, name, num = 1) {
+  stopSurahAudio();
+  document.body.classList.add("reading-mode");
   $("bookView").classList.remove("hidden");
   $("bookTitle").textContent = name;
   $("bookMeta").textContent = slug;
+  document.title = `${name} — Believer's Guide`;
+  $("hadithNo").value = num;
   $("loadHadith").onclick = async () => {
     const id = $("hadithNo").value || 1;
     try {
@@ -311,13 +457,20 @@ function parseHash() {
   const hash = location.hash;
   $("surahView").classList.add("hidden");
   $("bookView").classList.add("hidden");
-  if (hash.startsWith("#quran")) {
+  const isSurah = hash.startsWith("#quran") && hash.includes("s=");
+  const isHadith = hash.startsWith("#hadith") && hash.includes("b=");
+  if (isSurah) {
     const q = new URLSearchParams(hash.split("?")[1] || "");
     openSurah(Number(q.get("s")));
-  }
-  if (hash.startsWith("#hadith")) {
+  } else if (isHadith) {
     const q = new URLSearchParams(hash.split("?")[1] || "");
-    openHadith(q.get("b"), q.get("n"));
+    const slug = q.get("b");
+    const name = q.get("name") ? decodeURIComponent(q.get("name")) : (hadithData.find(b => b.slug === slug)?.name || slug);
+    openHadith(slug, name, q.get("n") || 1);
+  } else {
+    stopSurahAudio();
+    document.body.classList.remove("reading-mode");
+    document.title = "Believer's Guide";
   }
 }
 
@@ -362,9 +515,16 @@ $("madhabSelect").onchange = (e) => {
   }
 };
 
+$("citySearchBtn").onclick = () => {
+  const city = $("cityInput").value.trim();
+  const country = $("countryInput").value.trim();
+  if (!city || !country) return toast("اكتب اسم المدينة والدولة");
+  fetchPrayerTimesByCity(city, country);
+};
+
 $("quranSearch").oninput = e => renderQuran(quranData.filter(s => s.name.includes(e.target.value.trim())));
 $("hadithSearch").oninput = e => renderBooks(hadithData.filter(b => b.name.includes(e.target.value.trim())));
-$("backToQuran").onclick = () => location.hash = "#quran-section";
+$("backToQuran").onclick = () => { stopSurahAudio(); location.hash = "#quran-section"; };
 $("backToHadith").onclick = () => location.hash = "#hadith-section";
 
 function applyTheme() {
@@ -379,17 +539,19 @@ function loadStats() {
   $("count").textContent = state.zikr;
 }
 
-// التشغيل والتهيئة الحية
 renderPrayerTimes();
 renderQuran();
 renderBooks();
 renderAdhkar();
 renderTasks();
 applyTheme();
-autoLocation(); // يحدد الموقع الجغرافي ويجلب الأوقات المحدثة لليوم فوراً
+autoLocation();
 loadStats();
 parseHash();
 window.addEventListener("hashchange", parseHash);
 
-// فحص كل 30 ثانية لضمان دقة الأذان التلقائي وعدم فوات موعد الصلاة
-setInterval(checkPrayer, 30000);
+setInterval(checkPrayer, 15000);
+checkPrayer();
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) checkPrayer();
+});
