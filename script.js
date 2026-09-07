@@ -1,14 +1,9 @@
-// ====== Supabase: تسجيل الدخول بجوجل + حفظ التقدم بالسحابة ======
-// هام: استبدل القيمتين دول ببيانات مشروعك الحقيقي من Supabase Dashboard
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://klsotmphlscsbtbjtrot.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_J3Apxjcvka5UNLKqlqaphw_5awUuVUS";
 let currentUser = null;
 let cloudSyncTimer = null;
 let supabaseClient = null;
 
-// لو لسه محطتش بيانات Supabase الحقيقية (أو المكتبة فشلت تحمل)، الموقع
-// المفروض يفضل شغال عادي (قرآن، أحاديث، أذكار...) وبس زرار تسجيل الدخول
-// يبقى معطل مؤقتًا لحد ما تحط البيانات الصح.
 try {
   if (typeof supabase !== "undefined" && SUPABASE_URL && SUPABASE_URL !== "YOUR_SUPABASE_URL") {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
