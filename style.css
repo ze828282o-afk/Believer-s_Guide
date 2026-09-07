@@ -433,6 +433,14 @@ input:focus { border-color: var(--primary); }
   border-radius: 10px;
 }
 
+.reciter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.reciter-row .app-select { min-width: 220px; }
+
 .tasks { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
 .tasks li {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;

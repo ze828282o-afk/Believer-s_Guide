@@ -15,7 +15,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Supabase (تسجيل الدخول بجوجل + حفظ التقدم في السحابة) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -28,7 +27,7 @@
       <div class="topbar-left">
         <div>
           <h1>Believer’s Guide</h1>
-          <p></p>
+          <p>القرآن، الأحاديث، الصلاة، الأذكار، والمهام اليومية</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -41,7 +40,7 @@
       <div>
         <span class="badge">لوحة المسلم اليومية</span>
         <h2>كل شيء في مكان واحد</h2>
-        <p></p>
+        <p>تصميم أنيق، ألوان جذابة، وخط قرآن واضح.</p>
       </div>
       <div class="stats">
         <div><strong id="goodDeeds">0</strong><span>الحسنات</span></div>
@@ -85,10 +84,10 @@
     </section>
 
     <section class="cards-grid">
-      <a class="nav-card card" href="#quran-section"><h3>القرآن الكريم</h3><p></p></a>
-      <a class="nav-card card" href="#hadith-section"><h3>الأحاديث النبوية</h3><p></p></a>
-      <a class="nav-card card" href="#azkar-section"><h3>الأذكار</h3><p></p></a>
-      <a class="nav-card card" href="#tasks-section"><h3>المهام</h3><p></p></a>
+      <a class="nav-card card" href="#quran-section"><h3>القرآن الكريم</h3><p>فهرس السور وفتح كل سورة.</p></a>
+      <a class="nav-card card" href="#hadith-section"><h3>الأحاديث النبوية</h3><p>كتب الحديث وفتح كل كتاب.</p></a>
+      <a class="nav-card card" href="#azkar-section"><h3>الأذكار</h3><p>أذكار الصباح والمساء مع عداد.</p></a>
+      <a class="nav-card card" href="#tasks-section"><h3>المهام</h3><p>حفظ تلقائي مع checkbox.</p></a>
     </section>
 
     <section id="quran-section" class="card">
@@ -110,8 +109,12 @@
         </div>
       </div>
       <div class="audio-player-wrap">
-        <span class="muted">🎧 تلاوة بصوت الشيخ عبدالباسط عبدالصمد:</span>
+        <div class="reciter-row">
+          <span class="muted">🎧 القارئ:</span>
+          <select id="reciterSelect" class="app-select"></select>
+        </div>
         <audio id="surahAudio" controls preload="none"></audio>
+        <p id="reciterNote" class="muted" style="margin-top:6px; font-size:12px;"></p>
       </div>
       <div id="ayahs" class="ayahs"></div>
     </section>

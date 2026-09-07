@@ -1,10 +1,14 @@
-const SUPABASE_URL = "https://klsotmphlscsbtbjtrot.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_J3Apxjcvka5UNLKqlqaphw_5awUuVUS";
+// ====== Supabase: تسجيل الدخول بجوجل + حفظ التقدم بالسحابة ======
+// هام: استبدل القيمتين دول ببيانات مشروعك الحقيقي من Supabase Dashboard
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 let currentUser = null;
 let cloudSyncTimer = null;
 let supabaseClient = null;
 
-
+// لو لسه محطتش بيانات Supabase الحقيقية (أو المكتبة فشلت تحمل)، الموقع
+// المفروض يفضل شغال عادي (قرآن، أحاديث، أذكار...) وبس زرار تسجيل الدخول
+// يبقى معطل مؤقتًا لحد ما تحط البيانات الصح.
 try {
   if (typeof supabase !== "undefined" && SUPABASE_URL && SUPABASE_URL !== "YOUR_SUPABASE_URL") {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -150,6 +154,7 @@ const state = {
   completed: JSON.parse(localStorage.getItem("completedTasks") || "[]"),
   userCoords: JSON.parse(localStorage.getItem("userCoords") || "null"),
   manualCity: JSON.parse(localStorage.getItem("manualCity") || "null"),
+  reciter: localStorage.getItem("reciter") || "basit",
   motivational: ["ممتاز! كمل واثبت.","أحسنت جدًا.","ربنا يبارك فيك.","خطوة جميلة جدًا.","استمر، أنت على الطريق الصح."]
 };
 
@@ -165,6 +170,7 @@ function save() {
   localStorage.setItem("completedTasks", JSON.stringify(state.completed));
   localStorage.setItem("userCoords", JSON.stringify(state.userCoords));
   localStorage.setItem("manualCity", JSON.stringify(state.manualCity));
+  localStorage.setItem("reciter", state.reciter);
   scheduleCloudSave();
 }
 
@@ -394,31 +400,59 @@ function rewardQuran() {
   loadStats();
 }
 
-// عدة مصادر لصوت عبدالباسط عبدالصمد، بيجرب واحد ورا التاني تلقائيًا لو الأول مش شغال
-function basitAudioSources(num) {
-  const n3 = String(num).padStart(3, "0");
-  return [
-    `https://server7.mp3quran.net/basit/${n3}.mp3`,
-    `https://download.quranicaudio.com/quran/abdulbasit_mujawwad/${n3}.mp3`,
-    `https://server7.mp3quran.net/basit/Almusshaf-Al-Mojawwad/${n3}.mp3`,
-    `https://server7.mp3quran.net/download/basit/Almusshaf-Al-Mojawwad/${n3}.mp3`
-  ];
+// القراء المتاحون - كلهم مصحف مجود، روابط رسمية من mp3quran.net
+const RECITERS = {
+  basit: {
+    name: "عبدالباسط عبدالصمد (مجود)",
+    url: n3 => `https://server7.mp3quran.net/download/basit/Almusshaf-Al-Mojawwad/${n3}.mp3`
+  },
+  minsh: {
+    name: "محمد صديق المنشاوي (مجود)",
+    url: n3 => `https://server10.mp3quran.net/download/minsh/Almusshaf-Al-Mojawwad/${n3}.mp3`
+  },
+  mustafa: {
+    name: "مصطفى إسماعيل (مجود)",
+    url: n3 => `https://server8.mp3quran.net/download/mustafa/Almusshaf-Al-Mojawwad/${n3}.mp3`
+  },
+  refat: {
+    name: "محمد رفعت (مجود)",
+    url: n3 => `https://server14.mp3quran.net/download/refat/${n3}.mp3`
+  }
+};
+
+function populateReciterSelect() {
+  const sel = $("reciterSelect");
+  if (!sel || sel.options.length) return; // اتعمرت قبل كده
+  sel.innerHTML = Object.entries(RECITERS)
+    .map(([key, r]) => `<option value="${key}">${r.name}</option>`)
+    .join("");
+  sel.value = state.reciter || "basit";
+  sel.onchange = () => {
+    state.reciter = sel.value;
+    save();
+    if (currentSurahNum) setSurahAudio(currentSurahNum);
+  };
 }
 
+let currentSurahNum = null;
+
 function setSurahAudio(num) {
+  currentSurahNum = num;
+  populateReciterSelect();
+  const reciterKey = state.reciter || "basit";
+  const reciter = RECITERS[reciterKey] || RECITERS.basit;
+  const n3 = String(num).padStart(3, "0");
   const audio = $("surahAudio");
-  const sources = basitAudioSources(num);
-  let i = 0;
+  const note = $("reciterNote");
+  if (note) {
+    note.textContent = reciterKey === "refat"
+      ? "ملحوظة: تسجيلات الشيخ محمد رفعت قديمة ومش كل السور متسجلة، فممكن بعض السور ماتلاقيش ليها تسجيل."
+      : "";
+  }
   audio.onerror = () => {
-    i++;
-    if (i < sources.length) {
-      audio.src = sources[i];
-      audio.load();
-    } else {
-      toast("تعذر تشغيل التلاوة من كل المصادر المتاحة حاليًا");
-    }
+    toast(`تعذر تشغيل التلاوة بصوت ${reciter.name} لهذه السورة${reciterKey === "refat" ? " (غالبًا مش مسجلة له)" : ""}`);
   };
-  audio.src = sources[0];
+  audio.src = reciter.url(n3);
   audio.load();
 }
 
