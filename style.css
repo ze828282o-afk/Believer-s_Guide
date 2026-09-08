@@ -356,6 +356,25 @@ input:focus { border-color: var(--primary); }
   100% { box-shadow: 0 0 16px rgba(212, 175, 55, 0.45); border-color: var(--accent2) !important; }
 }
 
+.bismillah {
+  font-family: var(--serif);
+  font-size: 20px;
+  text-align: center;
+  color: var(--accent);
+  padding: 10px 0 16px;
+  letter-spacing: .5px;
+  position: relative;
+}
+.bismillah::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 10px auto 0;
+  opacity: .6;
+}
+
 .list-stack, .hadith-box, .ayahs { display: grid; gap: 12px; }
 
 .adhkar-card, .hadith-card, .ayah, .task-item {
@@ -433,13 +452,34 @@ input:focus { border-color: var(--primary); }
   border-radius: 10px;
 }
 
-.reciter-row {
+.reciter-cards {
   display: flex;
-  align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scrollbar-width: thin;
 }
-.reciter-row .app-select { min-width: 220px; }
+.reciter-chip {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform .15s ease, border-color .2s ease, background .2s ease;
+}
+.reciter-chip:hover { transform: translateY(-2px); border-color: var(--accent); }
+.reciter-chip.active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--primary), var(--primary2));
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(13, 148, 136, .25);
+}
 
 .tasks { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
 .tasks li {

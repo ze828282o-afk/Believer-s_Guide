@@ -1,9 +1,14 @@
-const SUPABASE_URL = "https://klsotmphlscsbtbjtrot.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_J3Apxjcvka5UNLKqlqaphw_5awUuVUS";
+// ====== Supabase: تسجيل الدخول بجوجل + حفظ التقدم بالسحابة ======
+// هام: استبدل القيمتين دول ببيانات مشروعك الحقيقي من Supabase Dashboard
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 let currentUser = null;
 let cloudSyncTimer = null;
 let supabaseClient = null;
 
+// لو لسه محطتش بيانات Supabase الحقيقية (أو المكتبة فشلت تحمل)، الموقع
+// المفروض يفضل شغال عادي (قرآن، أحاديث، أذكار...) وبس زرار تسجيل الدخول
+// يبقى معطل مؤقتًا لحد ما تحط البيانات الصح.
 try {
   if (typeof supabase !== "undefined" && SUPABASE_URL && SUPABASE_URL !== "YOUR_SUPABASE_URL") {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -129,10 +134,10 @@ const azkar = {
     { title: "أصبحنا وأصبح الملك لله", text: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ..." }
   ],
   مساء: [
-    { title: "آية الكرسي", text: "هُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلَا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ" },
+    { title: "آية الكرسي", text: "هُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ" },
     { title: "الإخلاص والفلق والناس", text: "قُلْ هُوَ ٱللَّهُ أَحَدٌ ... / قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ ... / قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ ..." },
     { title: "أمسينا وأمسى الملك لله", text: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذِهِ اللَّيْلَةِ: فَتْحَهَا وَنَصْرَهَا وَنُورَهَا وَبَرَكَتَهَا وَهُدَاهَا، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهَا وَشَرِّ مَا بَعْدَهَا" },
-    { title: "بسم الله الذي لا يضر", text: "ب بسمِ اللهِ الذي لا يضرُ مع اسمِه شيءٌ في الأرضِ ولا في السماءِ وهو السميعُ العليمُ" }
+    { title: "بسم الله الذي لا يضر", text: "سمِ اللهِ الذي لا يَضرُّ مع اسمِه شيءٌ في الأرضِ ولا في السماءِ وهو السميعُ العليمُ" }
   ]
 };
 
@@ -317,7 +322,7 @@ function checkPrayer() {
       save();
       toast(`حان وقت ${name}`);
 
-      // تمييز بصري للصلاة الحالية
+      
       document.querySelectorAll('.prayer-item').forEach(el => el.classList.remove('active-prayer'));
       const activeEl = $(`p-${name}`);
       if (activeEl) activeEl.classList.add('active-prayer');
@@ -395,60 +400,101 @@ function rewardQuran() {
   loadStats();
 }
 
-// القراء المتاحون - كلهم مصحف مجود، روابط رسمية من mp3quran.net
 const RECITERS = {
   basit: {
-    name: "عبدالباسط عبدالصمد (مجود)",
+    name: "عبدالباسط عبدالصمد",
     url: n3 => `https://server7.mp3quran.net/download/basit/Almusshaf-Al-Mojawwad/${n3}.mp3`
   },
   minsh: {
-    name: "محمد صديق المنشاوي (مجود)",
-    url: n3 => `https://server10.mp3quran.net/download/minsh/Almusshaf-Al-Mojawwad/${n3}.mp3`
+    name: " محمد صديق المنشاوي ",
+    url: n3 => `https://server10.mp3quran.net/download/minsh1387/${n3}.mp3`,
+    note: "ملحوظة: التسجيل ده قديم (1967م) ومش كل السور موجودة فيه بالكامل."
   },
   mustafa: {
-    name: "مصطفى إسماعيل (مجود)",
+    name: "مصطفى إسماعيل ",
     url: n3 => `https://server8.mp3quran.net/download/mustafa/Almusshaf-Al-Mojawwad/${n3}.mp3`
   },
   refat: {
-    name: "محمد رفعت (مجود)",
-    url: n3 => `https://server14.mp3quran.net/download/refat/${n3}.mp3`
+    name: "محمد رفعت ",
+    url: n3 => `https://server14.mp3quran.net/download/refat/${n3}.mp3`,
+    note: "ملحوظة: تسجيلات الشيخ محمد رفعت قديمة جدًا ومش كل السور متسجلة له."
+  },
+  husr: {
+    name: "محمود خليل الحصري ",
+    url: n3 => `https://server13.mp3quran.net/download/husr/${n3}.mp3`
+  },
+  bna: {
+    name: "محمود علي البنا ",
+    url: n3 => `https://server8.mp3quran.net/download/bna/${n3}.mp3`
+  },
+  ajbr: {
+    name: "علي جابر",
+    url: n3 => `https://server11.mp3quran.net/download/a_jbr/${n3}.mp3`
+  },
+  afs: {
+    name: "مشاري العفاسي",
+    url: n3 => `https://server8.mp3quran.net/download/afs/${n3}.mp3`
   }
 };
 
-function populateReciterSelect() {
-  const sel = $("reciterSelect");
-  if (!sel || sel.options.length) return; // اتعمرت قبل كده
-  sel.innerHTML = Object.entries(RECITERS)
-    .map(([key, r]) => `<option value="${key}">${r.name}</option>`)
-    .join("");
-  sel.value = state.reciter || "basit";
-  sel.onchange = () => {
-    state.reciter = sel.value;
-    save();
-    if (currentSurahNum) setSurahAudio(currentSurahNum);
-  };
+function renderReciterCards() {
+  const wrap = $("reciterCards");
+  if (!wrap) return;
+  const activeKey = state.reciter || "basit";
+  wrap.innerHTML = Object.entries(RECITERS)
+    .map(([key, r]) => `
+      <button type="button" class="reciter-chip ${key === activeKey ? "active" : ""}" data-key="${key}">
+        ${r.name}
+      </button>
+    `).join("");
+  wrap.querySelectorAll(".reciter-chip").forEach(chip => {
+    chip.onclick = () => {
+      state.reciter = chip.dataset.key;
+      save();
+      renderReciterCards();
+      if (currentSurahNum) setSurahAudio(currentSurahNum);
+    };
+  });
 }
 
 let currentSurahNum = null;
 
 function setSurahAudio(num) {
   currentSurahNum = num;
-  populateReciterSelect();
+  renderReciterCards();
   const reciterKey = state.reciter || "basit";
   const reciter = RECITERS[reciterKey] || RECITERS.basit;
   const n3 = String(num).padStart(3, "0");
   const audio = $("surahAudio");
   const note = $("reciterNote");
-  if (note) {
-    note.textContent = reciterKey === "refat"
-      ? "ملحوظة: تسجيلات الشيخ محمد رفعت قديمة ومش كل السور متسجلة، فممكن بعض السور ماتلاقيش ليها تسجيل."
-      : "";
-  }
+  if (note) note.textContent = reciter.note || "";
   audio.onerror = () => {
-    toast(`تعذر تشغيل التلاوة بصوت ${reciter.name} لهذه السورة${reciterKey === "refat" ? " (غالبًا مش مسجلة له)" : ""}`);
+    toast(`تعذر تشغيل التلاوة بصوت ${reciter.name} لهذه السورة${reciter.note ? " (غالبًا مش مسجلة له)" : ""}`);
   };
   audio.src = reciter.url(n3);
   audio.load();
+}
+
+function stripDiacritics(s) {
+  return s.replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0670]/g, "");
+}
+
+function splitBismillah(text) {
+  const target = "بسم الله الرحمن الرحيم";
+  const mapping = [];
+  let stripped = "";
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (!/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0670]/.test(ch)) {
+      stripped += ch;
+      mapping.push(i);
+    }
+  }
+  if (!stripped.startsWith(target)) return null;
+  let endIdx = mapping[target.length - 1] + 1;
+  while (endIdx < text.length && /[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0670]/.test(text[endIdx])) endIdx++;
+  while (endIdx < text.length && /\s/.test(text[endIdx])) endIdx++;
+  return { bismillah: text.slice(0, endIdx).trim(), rest: text.slice(endIdx) };
 }
 
 function openSurah(num) {
@@ -464,7 +510,17 @@ function openSurah(num) {
     .then(r => r.json())
     .then(data => {
       $("surahMeta").textContent = `عدد الآيات: ${data.data.numberOfAyahs} | ${data.data.revelationType}`;
-      $("ayahs").innerHTML = data.data.ayahs.map(a => `
+      let ayahsList = data.data.ayahs;
+      let bismillahHtml = "";
+
+      if (num !== 1 && num !== 9 && ayahsList.length) {
+        const split = splitBismillah(ayahsList[0].text);
+        if (split) {
+          bismillahHtml = `<div class="bismillah">${split.bismillah}</div>`;
+          ayahsList = [{ ...ayahsList[0], text: split.rest }, ...ayahsList.slice(1)];
+        }
+      }
+      $("ayahs").innerHTML = bismillahHtml + ayahsList.map(a => `
         <div class="ayah">
           <div class="ayah-text">${a.text}<span class="ayah-number">${a.numberInSurah}</span></div>
         </div>
@@ -562,7 +618,6 @@ $("addTask").onclick = () => {
   toast("تمت إضافة المهمة");
 };
 
-// تشغيل فلتر المذاهب عند التغيير
 $("madhabSelect").value = state.madhab;
 $("madhabSelect").onchange = (e) => {
   state.madhab = e.target.value;
